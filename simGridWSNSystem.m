@@ -44,7 +44,7 @@ casename = 'case14';
 %% Create Grid Object
 IEEE14BusGrid = PowerGrid(casename);
 % Create sensor measurement startegy
-IEEE14BusGrid.createMeasStrategy();
+IEEE14BusGrid.createMeasStrategyWorking();
 % IEEE14BusGrid.createMeasStrategyWeakBus8();
 
 %% Create Environment Object

@@ -13,17 +13,17 @@ classdef CommsChannel
             obj.SNR_dB = SNR_dB;
         end
 
-        function rxData = addWhiteNoise(obj, txData)
+       function rxData = addWhiteNoise(obj, txData) 
             % ADDWHITENOISE Adds AWGN based on a specified SNR (Signal-to-Noise Ratio)
             
             rxData = txData;
             nChains = numel(txData.Chains);
             
             % Assume you have defined obj.SNR_dB (e.g., 30 dB)
-            snr_linear = 10^(obj.SNR_dB / 10);
+            snrLinear = 10^(obj.SNR_dB / 10);
             
             for iChains = 1:nChains
-                rxData.Chains(iChains).dataType = txData.Chains(iChains).dataType;
+                rxData.Chains(iChains).dataType = txData.Chains(iChains).dataType; 
                 data = txData.Chains(iChains).data;
                 [nData, nDataType] = size(data);
                 
@@ -37,7 +37,7 @@ classdef CommsChannel
                 end
                 
                 % 2. Calculate the fixed Communication Variance based on SNR
-                commVariance = signalPower / snr_linear;
+                commVariance = signalPower / snrLinear;
                 commStdDev = sqrt(commVariance);
                 
                 % 3. Generate independent AWGN
