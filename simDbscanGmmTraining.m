@@ -1,7 +1,7 @@
-% simGridWSNSystemAlg.m
+% simDbscanGmmTraining.m
 %% Simulate Grid, WSN/IoT Edge Node System
-% This is a top level file that simulates the power grid, WSN/IoT nodes and
-% the edge node.
+% This is a top level file that trains the DBSCAN-GMM model at the sensor
+% nodes.
 %% Clean up
 clear all; clc; close all;
 
@@ -10,8 +10,7 @@ dbstop if error
 dbstop if warning
 
 %% Global Parameters
-fileName = 'dbscanGmmWLS_p_0_01';
-resultsPath = '.\Results';
+figsPath = '.\Figures';
 
 %% DEBUG
 % DEBUG_FLAG = true;
@@ -172,7 +171,7 @@ gridEdgeNodeObj = GridEdgeNode(IEEE30BusGrid, nTestingData, gridSensorNoiseStd, 
 
 %% Create Sensors Objects & Train Model
 nBus = numel(IEEE30BusGridEnv.Grid.Bus);
-
+candidateBuses = [2, 6, 10, 12, 15];
 fprintf('----------------------------------\n');
 fprintf('\n Start DBSCAN-GMM Training...\n')
 for iBus = 1:nBus
@@ -183,107 +182,89 @@ for iBus = 1:nBus
     sensorObj(iBus).trainChains(trainningDataRange);
 
     % Visualize chain model
-    % sensorObj(iBus).visualizeModels();
+    if any(iBus == candidateBuses)
+        sensorObj(iBus).visualizeModels();
+    end
 end
 fprintf('\n Training Complete.\n')
 fprintf('------------------------------\n');
 
-%%  Inference
-fprintf('----------------------------------\n');
-fprintf('\n Start DBSCAN-GMM Filtering...\n')
-for iBus = 1:nBus
-
-    % Test model
-    sensorObj(iBus).gmFiltering(testDataRange);
-
-    % Transmit filtered data
-    txData(iBus) = sensorObj(iBus).transmit();
-
-    % Comms channel    
-    % rxData(iBus) = commsChannelObj.addWhiteNoise(txData(iBus));
-    % Short-circuit channel
-    rxData(iBus) = txData(iBus);
-
-    % Receive data at edge node
-    gridEdgeNodeObj.receive(rxData(iBus));
-end
-
-fprintf('\n Filtering Complete.\n')
-fprintf('------------------------------\n');
-
-%% State Estimation
-tStart = tic;
-fprintf('\n--- Starting Simulation Batch ---\n');
-
-for i = 1:length(Algorithms)
-    fprintf('\nRunning: %s\n', Algorithms(i).Name);
-    fprintf('------------------------------\n');
-    
-    % Execute State Estimation
-    [estState, convData] = gridEdgeNodeObj.computeStateEst(Algorithms(i).Options);
-    % [estState, convData] = gridEdgeNodeObj.computeStateEstDebug(Algorithms(i).Options);
-    
-    % Store raw results directly into the struct
-    Algorithms(i).StateEst = estState;
-    Algorithms(i).ConvData = convData;
-end
-
-% Print elapsed time
-totalMin = toc(tStart)/60;
-fprintf('\nAll simulations completed in %.3f min.\n', totalMin);
 
 %% Performance Analysis & Plotting
 MonteCarloPerformObj = MonteCarloPerformance(resultsPath);
 
-% Preallocate lists for plotting functions
-maeMetricsList = {};
-convMetricsList = {};
-legendNames = {};
-
-for i = 1:length(Algorithms)
-    % 1. Compute MAE Metrics
-    Algorithms(i).MAEMetrics = MonteCarloPerformObj.computeMAE(...
-        Algorithms(i).StateEst, IEEE30BusGrid.TrueGridState);
-    
-    % 2. Compute Convergence Statistics
-    Algorithms(i).ConvMetrics = MonteCarloPerformObj.computeConvStats(...
-        Algorithms(i).ConvData);
-    
-    % 3. Collect for Plotting
-    maeMetricsList{end+1} = Algorithms(i).MAEMetrics;
-    convMetricsList{end+1} = Algorithms(i).ConvMetrics;
-    legendNames{end+1} = Algorithms(i).Name;
-end
-
-% --- Dynamic Plotting ---
-% We use the spread operator (...) to pass the cells as individual arguments
-
-% Plot MAE Comparison
-% Assuming plotCompareMAE takes (metric1, metric2, ..., label1, label2, ...)
-% Note: You might need to adjust your plotCompareMAE signature to accept a cell array of metrics
-% OR use this syntax to unwrap them:
-MonteCarloPerformObj.plotCompareMAE(maeMetricsList{:}, legendNames{:});
-
-% Plot Convergence Statistics
-MonteCarloPerformObj.plotConvStats(convMetricsList{:}, legendNames{:});
-
-%% Save Results
-if SAVE_FLAG
-% Extract the property into a named workspace variable
-    TrueGridState = IEEE30BusGrid.TrueGridState;
-    
-    % Now pass the clean variable name
-    MonteCarloPerformObj.save(fileName, algSelect, Algorithms, TrueGridState);
-end
-
 %% 
-pool = gcp('nocreate');   % return [] if no pool
-if ~isempty(pool)
-    delete(pool);         % shuts down all workers in that pool
+% Ensure the 2x2 figure is currently active
+sourceFig = gcf;
+
+% Define the strict IEEE publication size
+targetSize = [100, 100, 400, 320];
+
+% Find all axes, excluding any legends
+allAxes = findobj(sourceFig, 'Type', 'axes');
+allAxes = allAxes(~ismember(get(allAxes,'Tag'), {'legend'}));
+
+for i = 1:length(allAxes)
+    ax = allAxes(i);
+    
+    % 1. Create a new, strictly sized independent figure
+    newFig = figure('Position', targetSize, 'Color', 'w');
+    
+    % 2. Copy the existing axes into the new figure
+    newAx = copyobj(ax, newFig);
+    
+    % 3. Recreate the legend with exact text and location
+    if ~isempty(ax.Legend)
+        newLeg = legend(newAx, ax.Legend.String);
+        newLeg.Location = ax.Legend.Location;
+    end
+    
+    % 4. THICKEN THE ELLIPSOIDS
+    plotLines = findall(newAx, 'Type', 'line');
+    for k = 1:length(plotLines)
+        if ~strcmpi(plotLines(k).LineStyle, 'none')
+            plotLines(k).LineWidth = 2.5; 
+        end
+    end
+    
+    % 5. Standardize the inner plotting area to prevent margins from shifting
+    newAx.Position = [0.15 0.15 0.75 0.75]; 
+    
+    % 6. Identify the plot type via its title to apply the correct aspect ratio
+    titleStr = strjoin(string(newAx.Title.String));
+    if contains(titleStr, 'PD-QD') || contains(titleStr, 'PF-QF')
+        axis(newAx, 'equal');
+    else
+        axis(newAx, 'normal');
+    end
+    
+    % 7. Format a clean filename from the title
+    safeName = strrep(titleStr, ' ', '_');
+    safeName = strrep(safeName, '-', '_');
+    if isempty(safeName)
+        safeName = sprintf('Plot_%d', i); 
+    end
+    
+    % 8. REMOVE THE TITLE
+    title(newAx, ''); 
+    
+    % 9. Save the perfectly proportioned standalone figure
+    MonteCarloPerformObj.saveTargetFigure(newFig, '.\Figures', [char(safeName), '_Bus15.pdf']);
+    
+    % Close the temporary figure to keep the workspace clean
+    close(newFig);
 end
 
+fprintf('Successfully split the layout, thickened ellipsoids, removed titles, and saved PDFs.\n');
+%% Save Figures
+if SAVE_FLAG
+    % Target figure number 5 (assuming figure 5 corresponds to Bus 5)
+    candBusNum = 15;
+    figNum = find(candBusNum == candidateBuses);
 
-if exist('q','var') && isa(q,'parallel.pool.PollableDataQueue')
-    close(q);    % prevents further sends
-    delete(q);
+    % Specify the exact filename with the .pdf extension
+    pdfFileName = sprintf('DBSCAN_GMM_Training_Bus%d.pdf',candBusNum);
+
+    % Call the new method to format and export it
+    MonteCarloPerformObj.saveTargetFigure(figNum, '.\Figs', pdfFileName);
 end
