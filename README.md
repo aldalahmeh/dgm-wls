@@ -38,4 +38,4 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 
 ## Citation
 If you use this code in your research, please cite the corresponding paper:
-> [Author Names], "[Your Paper Title]," in *IET Smart Cities*, 2026. (DOI pending)
+> [Mahmoud Zeidan, Sami A. Aldalahmeh, Ali M. Hayajneh and Yazan Al-Rawashdeh], "Robust Power Distribution System State Estimation in IoT Grids via Unsupervised Clustering and Data-Driven Weighting," in *IET Smart Cities*, 2026. [DOI pending](https://doi.org/10.5281/zenodo.19266329)
