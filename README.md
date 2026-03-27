@@ -15,6 +15,9 @@ To run this code, you will need:
 
 ### Core Classes
 * `PowerGrid.m`: Class handling the IEEE test case instantiation, power flow ground truth generation, and sensor strategy mapping.
+* `GridBusSensorNode.m`: Class simulating the RTU-IoT sensor nodes performing the DBSCAN-GMM-MAP.
+* `GridEdgeNode.m`: Class simulating the edge-node where the WLS is performed.
+* `GridEnvironment.m`: Class simulating the grid environment with baseline Gaussian noise and impulsive noise.
 * `MonteCarloPerformance.m`: Evaluation class for computing Mean Absolute Error (MAE), convergence statistics, F1 scores, and generating publication-ready figures.
 
 ### Top-Level Scripts
@@ -25,9 +28,28 @@ To run this code, you will need:
 * `computeMonteCarloPerformanceBatch.m`: Processes and evaluates multiple simulation results in batches across varying noise probability scenarios.
 * `computeMonteCarloPerformanceAve.m`: Computes the grid-wide average performance metrics and generates the final trend figures.
 
+## Installation and Setup
+
+### 1. Prerequisites
+* **MATLAB:** The codebase was developed and tested on MATLAB R2025a.
+* **MATPOWER:** An open-source MATLAB power system simulation package. 
+
+### 2. Install MATPOWER
+If you do not already have MATPOWER installed:
+1. Download the latest release from the official [MATPOWER website](https://matpower.org/) or their [GitHub repository](https://github.com/MATPOWER/matpower).
+2. Extract the downloaded folder to a location on your machine.
+3. Open MATLAB and run the `install_matpower` script located inside the extracted folder to automatically add the necessary directories to your MATLAB path.
+
+### 3. Clone This Repository
+You can download the repository as a `.zip` file using the green "Code" button above, or clone it via the command line:
+
+```bash
+git clone [https://github.com/aldalahmeh/dgm-wls.git](https://github.com/aldalahmeh/dgm-wls.git)
+```
+
 ## Usage Workflow
 1. Ensure MATPOWER is installed and added to your MATLAB path.
-2. Clone or download this repository.
+2. Clone or download this repository as stated before.
 3. **Generate Data:** Run `genSimPowerDataIEEEtestCases.m` to establish the ground truth.
 4. **Tune Filters (Optional):** Run `simDbscanGmmTuning.m` if you wish to replicate the hyperparameter selection process.
 5. **Run Estimation:** Execute `simGridWSNSystemAlg.m` to perform the state estimation under impulsive noise.
