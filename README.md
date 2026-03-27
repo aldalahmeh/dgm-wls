@@ -12,15 +12,26 @@ To run this code, you will need:
 * **MATPOWER** (Open-source power system simulation package)
 
 ## Repository Structure
-* `PowerGrid.m`: Class handling the IEEE 30-bus grid instantiation, power flow ground truth generation, and sensor strategy mapping.
-* `MonteCarloPerformance.m`: Evaluation class for computing Mean Absolute Error (MAE), convergence statistics, F1 scores, and generating publication-ready IEEE-compliant figures.
-* `[Insert_Your_Main_Script_Name].m`: The top-level batch script to run the varying noise probability scenarios ($p=0.001$ to $p=0.1$).
 
-## Usage
+### Core Classes
+* `PowerGrid.m`: Class handling the IEEE test case instantiation, power flow ground truth generation, and sensor strategy mapping.
+* `MonteCarloPerformance.m`: Evaluation class for computing Mean Absolute Error (MAE), convergence statistics, F1 scores, and generating publication-ready figures.
+
+### Top-Level Scripts
+* `genSimPowerDataIEEEtestCases.m`: Generates the baseline power flow data and ground truth states for the test grid.
+* `simDbscanGmmTuning.m`: Executes hyperparameter tuning for the DBSCAN-GMM filtering stage to optimize the F1 detection score.
+* `simGridWSNSystemAlg.m`: The primary simulation script that runs the WLS, DGM-WLS, and IRWLS state estimation algorithms across the grid network.
+* `computeMonteCarloPerformance.m`: Evaluates the results of a single Monte Carlo simulation run.
+* `computeMonteCarloPerformanceBatch.m`: Processes and evaluates multiple simulation results in batches across varying noise probability scenarios.
+* `computeMonteCarloPerformanceAve.m`: Computes the grid-wide average performance metrics and generates the final trend figures.
+
+## Usage Workflow
 1. Ensure MATPOWER is installed and added to your MATLAB path.
 2. Clone or download this repository.
-3. Open `[Insert_Your_Main_Script_Name].m` in MATLAB and run the script. 
-4. The script will automatically generate the results and save the corresponding `.eps` figures to the `\Figures` directory.
+3. **Generate Data:** Run `genSimPowerDataIEEEtestCases.m` to establish the ground truth.
+4. **Tune Filters (Optional):** Run `simDbscanGmmTuning.m` if you wish to replicate the hyperparameter selection process.
+5. **Run Estimation:** Execute `simGridWSNSystemAlg.m` to perform the state estimation under impulsive noise.
+6. **Evaluate:** Use the `computeMonteCarloPerformance` scripts to process the saved data and generate the `.eps` performance figures.
 
 ## License
 This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
